@@ -388,7 +388,7 @@ body {
     transition:1s all ease-out;
     z-index:99;
     background: #00b7ea; /* Old browsers */ /* FF3.6-15 */ /* Chrome10-25,Safari5.1-6 */
-    background: radial-gradient(ellipse at center,  #00b7ea 0%,#008fb7 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    background: radial-gradient(ellipse at center,  #e8faff 0%,#d7f6ff 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00b7ea', endColorstr='#008fb7',GradientType=1 );
 }
 
@@ -397,7 +397,7 @@ body {
 .splash-screen h3 {
       font-size:32px;
       text-align:center;
-      color:#fff;
+      color:#555;
     }
 
 .splash-screen.dissolving {
@@ -411,6 +411,10 @@ body {
   
   text-align:center;
 }
+
+.splash--inner h3 {
+    color:#555;
+  }
 
 .splash--inner::after {
     content:'';
@@ -437,7 +441,7 @@ body {
   width: 6px;
   height: 6px;
  
-  background: #fff;
+  background: #555;
   -webkit-animation-timing-function: cubic-bezier(0, 1, 1, 0);
           animation-timing-function: cubic-bezier(0, 1, 1, 0);
 }
