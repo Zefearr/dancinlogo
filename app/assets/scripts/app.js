@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import { materials } from './modules/materials';
-import { models } from './modules/models';
+// import { models } from './modules/models';
 import { lights } from './modules/lights';
-import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import Manager from './modules/manager';
 const manager = new Manager();
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
+import { particleGrid } from './modules/particles';
+// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
@@ -18,8 +18,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 
 import About from './modules/about';
 const about = new About();
-// import Manager from './modules/manager';
-// const manager = new Manager();
+
 
 const ui = (function () {
   let domStrings = {
@@ -36,24 +35,29 @@ const scene = (function (ui, lights, materials) {
   const domStrings = ui.getDomStrings();
   const audio = new Audio();
   var toggleLightsBtn = document.getElementById('lightToggler');
-
-  var scene, camera, clock, renderer, controls, composer, params, bloomPass,  renderScene, toggleLightsBtn;
-  var WIDTH = window.innerWidth; 
+  var audioClip = new Audio();
+  audioClip.src = './assets/audio/pascal-letoublon-friendships-original-mix.mp3';
+  audioClip.volume = 0.5;
+  var playaudioBtn = document.getElementById('audioPlay');
+  var stopaudioBtn = document.getElementById('audioStop');
+  var scene, camera, clock, renderer, action, controls, composer, params, bloomPass, renderScene, mixer, toggleLightsBtn;
+  var WIDTH = window.innerWidth;
   var HEIGHT = window.innerHeight;
   var loader = new FBXLoader(manager);
 
+
   var params = {
     exposure: 1,
-    bloomStrength: 0.3,
-    bloomThreshold: 0,
-    bloomRadius: 0.7
+    bloomStrength: 1,
+    bloomThreshold: 0.2,
+    bloomRadius: 1,
+    material: "Lambert"
   };
 
   clock = new THREE.Clock();
-
-  camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 1000);
-  camera.position.z = 0;
-  camera.position.x = -3.5
+  camera = new THREE.PerspectiveCamera(28, WIDTH / HEIGHT, 1, 1000);
+  camera.position.z = 20;
+  camera.position.x = 0;
 
   camera.position.y = 0;
 
@@ -66,27 +70,115 @@ const scene = (function (ui, lights, materials) {
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(WIDTH, HEIGHT);
   document.getElementById(domStrings.webglContainer).appendChild(renderer.domElement);
+
+  let wr = document.getElementById('webgl');
+
+
+  if (wr !== null) {
+    let canv = wr.getElementsByTagName('canvas')[0];
+    canv.addEventListener('mouseover', function (event) {
+      document.body.style.cursor = 'grab';
+    });
+    canv.addEventListener('mouseout', function (event) {
+      document.body.style.cursor = 'default';
+    });
+    canv.addEventListener('mousedown', function (event) {
+      document.body.style.cursor = 'grabbing';
+    });
+    canv.addEventListener('mouseup', function (event) {
+      document.body.style.cursor = 'grab';
+    });
+  }
+
   var scene = new THREE.Scene();
   renderer.autoClear = false;
+  renderer.setClearColor(0x001a33);
 
-  // var controls = new OrbitControls(camera, renderer.domElement);
-  var controls = new OrbitControls(camera, renderer.domElement);
-  controls.maxDistance = 10;
-  controls.maxPolarAngle = Math.PI * 0.495;
+
+  var controls = new TrackballControls(camera, renderer.domElement);
+  controls.maxDistance = 100;
   controls.enableDamping = true;
-  controls.screenSpacePanning = true;
+  controls.dynamicDampingFactor = 0.1;
+  controls.rotateSpeed = 2.0;
+  controls.zoomSpeed = 0.5;
+
+  loader.load('./assets/models/onoff4.fbx', function (object) {
+    var mat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    // mat.wireframe = true;
+    mat.emissive = new THREE.Color('gray');
+    mat.emissiveMap = textureLoader.load('./assets/images/textures/lambert2_emissive.jpg');
+    mat.map = textureLoader.load('./assets/images/textures/lambert2_albedo.jpg');
+    // mat.roughness = 1;
+    // mat.normalMap = textureLoader.load('./assets/images/textures/lambert2_normal.png');
+    // mat.normalScale = new THREE.Vector2(1, 1);
+    // mat.roughnessMap = textureLoader.load('./assets/images/textures/lambert2_roughness.jpg');
+    // mat.metalnessMap =  textureLoader.load('./assets/images/textures/lambert2_metallic.jpg');
+
+    let wireFrameToggler = document.getElementById('materialType');
+    wireFrameToggler.addEventListener('change', function(){
+      if(this.checked)  {
+        mat.wireframe = true
+      } else mat.wireframe = false; 
+       
+    })
+    // object.castShadow = true;
+    // object.receiveShadow = true;
+
+    object.scale.x = 1;
+    object.scale.y = 1;
+    object.scale.z = 1;
 
 
-  // controls.lookSpeed = 0.1;
-  // controls.movementSpeed = 1;
-  // controls.noFly = true;
-  // controls.lookVertical = true;
-  // controls.constrainVertical = true;
-  // controls.verticalMin = 0;
-  // controls.verticalMax = 3;
-  // controls.lon = -200;
-  // controls.lat = 200;
 
+    mixer = new THREE.AnimationMixer(object);
+    action = mixer.clipAction(object.animations[0]);
+    action.setLoop(THREE.LoopOnce);
+
+    mixer.addEventListener('finished', function (e) {
+      audioClip.currentTime = 0;
+      audioClip.pause();
+      action.reset();
+      action.timeScale = 0;
+      off();
+    });
+
+    object.material = mat;
+
+    object.traverse(function (child) {
+      if (child) {
+        child.material = mat;
+        // child.castShadow = true;
+        // child.receiveShadow = true;
+      }
+    })
+
+
+    object.name = 'asd'
+    scene.add(object);
+
+    
+  });
+  function updateCube() {
+    var value = params.material;
+    var newMaterial;
+    let obj = scene.getObjectByName('asd');
+ 
+    if (value == "Lambert")
+      newMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+    else // (value == "Wireframe")
+      newMaterial = new THREE.MeshBasicMaterial({ wireframe: true });
+      obj.material = newMaterial;
+  }
+
+  var pivotMat = materials.initMaterials('basic', 'white');
+  // var pivot = models.getSphere(pivotMat, 0.1, 12);
+  var light2 = lights.getPointLight(0.5);
+  // light2.add(pivot);
+  light2.position.z = 5;
+  light2.position.y = 5;
+  scene.add(light2);
+  // var light3 = lights.getAmbientLight(0.05);
+  // scene.add(light3);
 
   scene.add(camera);
 
@@ -96,193 +188,55 @@ const scene = (function (ui, lights, materials) {
   bloomPass.strength = params.bloomStrength;
   bloomPass.radius = params.bloomRadius;
 
- 
   composer = new EffectComposer(renderer);
 
   composer.addPass(renderScene);
   composer.addPass(bloomPass);
 
-  //lightSetup
-
-  var main_grp = new THREE.Group();
-
-  function switchToNight() {
-    if (this.checked) {
-      nightStyle();
-    } else dayStyle();
+  const playAudioSong = function () {
+    action.play();
+    action.timeScale = 1;
+    audioClip.play();
   }
-  var stateIconDay = document.querySelector('.sun');
-  var stateIconNight = document.querySelector('.moon');
 
-  function nightStyle() {
-    stateIconDay.style.opacity = 0;
-    stateIconNight.style.opacity = 1;
-    rmSwitch('night');
+  const stopAudioSong = function () {
+    action.timeScale = 0;
+    audioClip.pause();
   }
-  function dayStyle() {
-    stateIconDay.style.opacity = 1;
-    stateIconNight.style.opacity = 0;
-    rmSwitch('day');
-  }
-  // const lightControls = {
-  //   room = {
-  //     roomNightSrc: textureLoader.load('./assets/images/textures/room/room_nightlightmap.png'),
-  //     roomDaySrc: textureLoader.load('./assets/images/textures/room/room_lightmap.png')
-  //   }
-  // }
-  // console.log(lightControls);
-  
 
 
-  const windowPlane = models.loadWindow();
-  main_grp.add(windowPlane);
+  var gui = new GUI();
+
  
 
-  const all = models.loadAll();
-  main_grp.add(all);
+  gui.add(params, 'exposure', 0.1, 2).onChange(function (value) {
 
-    
+    renderer.toneMappingExposure = Math.pow(value, 4.0);
 
-  function rmSwitch(type) {
-
-  
-    var roomNightSrc = textureLoader.load('./assets/images/textures/room/room_nightlightmap.png');
-    var roomDaySrc = textureLoader.load('./assets/images/textures/room/room_lightmap.png');
-
-    var furNightSrc = textureLoader.load('./assets/images/textures/furniture/fur_nightlightmap.png');
-    var furDaySrc = textureLoader.load('./assets/images/textures/furniture/fur_lightmap.png');
-
-    var screenNightSrc = textureLoader.load('./assets/images/textures/reflector/reflector_nightlightmap.png');
-    var screenDaySrc = textureLoader.load('./assets/images/textures/reflector/reflector_lightmap.png');
-
-    var fabNightSrc = textureLoader.load('./assets/images/textures/fabrics/fabrick_nightlightmap.png');
-    var fabDaySrc = textureLoader.load('./assets/images/textures/fabrics/fabrick_lightmap.png');
-
-    var cursNightSrc = textureLoader.load('./assets/images/textures/curtains/curtains_nightlightmap.png');
-    var cursDaySrc = textureLoader.load('./assets/images/textures/curtains/curtains_lightmap.png');
-
-    var stuffNightSrc = textureLoader.load('./assets/images/textures/lamps/stuff_nightlightmap.png');
-    var stuffDaySrc = textureLoader.load('./assets/images/textures/lamps/stuff_lightmap.png');
-
-    var books2NightSrc = textureLoader.load('./assets/images/textures/books/books_2_nightlightmap.png');
-    var books2DaySrc = textureLoader.load('./assets/images/textures/books/books_2_lightmap.png');
-
-    var kompNightSrc = textureLoader.load('./assets/images/textures/pc_nightlightmap.png');
-    var kompDaySrc = textureLoader.load('./assets/images/textures/pc_lightmap.png');
-
-    var booksNightSrc = textureLoader.load('./assets/images/textures/books/books_nightlightmap_2k.png');
-    var booksDaySrc = textureLoader.load('./assets/images/textures/books/books_lightmap_2k.png');
-
-    var plantNightSrc = textureLoader.load('./assets/images/textures/plant/plant_nightlightmap.png');
-    var plantDaySrc = textureLoader.load('./assets/images/textures/plant/plant_lightmap.png');
-
-    var windowPlaneNightSrc = textureLoader.load('./assets/images/textures/trees_night.png');
-    var windowPlaneDaySrc = textureLoader.load('./assets/images/textures/trees.png');
-    
-  
-    var sc = scene.getObjectByName('room_base');
-    var fur = scene.getObjectByName('furz');
-    var ref = scene.getObjectByName('screen');
-    var fabs = scene.getObjectByName('fabs')
-    var curs = scene.getObjectByName('curtains1');
-    var lamps = scene.getObjectByName('stuff');
-    var books2 = scene.getObjectByName('books_2');
-    var komp = scene.getObjectByName('komp');
-    var books1 = scene.getObjectByName('books_1');
-    var plant = scene.getObjectByName('plant');
-    var windowPlane = scene.getObjectByName('pPlane1');   
-
-    switch (type) {
-      case 'day':
-        sc.material.lightMap = roomDaySrc;
-        fur.material.lightMap = furDaySrc;
-        ref.material.lightMap = screenDaySrc;
-        fabs.material.lightMap = fabDaySrc;
-        curs.material.lightMap = cursDaySrc;
-        lamps.material.lightMap = stuffDaySrc;
-        books2.material.lightMap = books2DaySrc;
-        komp.material.lightMap = kompDaySrc;
-        books1.material.lightMap = booksDaySrc;
-        plant.material.lightMap = plantDaySrc;
-        windowPlane.material.map = windowPlaneDaySrc;
-        break;
-      case 'night':
-        sc.material.lightMap = roomNightSrc;
-        fur.material.lightMap = furNightSrc;
-        ref.material.lightMap = screenNightSrc;
-        fabs.material.lightMap = fabNightSrc;
-        curs.material.lightMap = cursNightSrc;
-        lamps.material.lightMap = stuffNightSrc;
-        books2.material.lightMap = books2NightSrc;
-        komp.material.lightMap = kompNightSrc;
-        books1.material.lightMap = booksNightSrc;
-        plant.material.lightMap = plantNightSrc;
-        windowPlane.material.map = windowPlaneNightSrc;
-
-        break;
-      default:
-        sc.material.lightMap = roomDaySrc;
-        // fur.material.lightMap = furDaySrc;
-        // ref.material.lightMap = screenDaySrc;
-        // fabs.material.lightMap = fabDaySrc;
-        // curs.material.lightMap = cursDaySrc;
-        // lamps.material.lightMap = stuffDaySrc;
-        // books2.material.lightMap = books2DaySrc;
-        // komp.material.lightMap = kompDaySrc;
-        // books1.material.lightMap = booksDaySrc;
-        // plant.material.lightMap = plantDaySrc;
-        break;
-    }
-  }
-
-  main_grp.add(all);
-
-  var mirr = new THREE.PlaneBufferGeometry(0.98, 2);
-  var verticalMirror = new Reflector(mirr, {
-    clipBias: 0.003,
-    textureWidth: WIDTH * window.devicePixelRatio,
-    textureHeight: HEIGHT * window.devicePixelRatio,
-    color: 0x889999,
-    recursion: 1
   });
-  verticalMirror.position.x = 2.38;
-  verticalMirror.position.y = 1.1;
-  verticalMirror.position.z = 1.48;
-  verticalMirror.rotation.y = -Math.PI / 2;
+  gui.add(light2, 'intensity', 0, 1, 0.01);
+  gui.add(params, 'bloomThreshold', 0.0, 1.0).onChange(function (value) {
 
-  main_grp.add(verticalMirror);
-  main_grp.position.y = -1;
-  scene.add(main_grp);
+    bloomPass.threshold = Number(value);
 
- 
+  });
 
+  gui.add(params, 'bloomStrength', 0.0, 3.0).onChange(function (value) {
 
-  // var gui = new GUI();
+    bloomPass.strength = Number(value);
 
-  // gui.add(params, 'exposure', 0.1, 2).onChange(function (value) {
+  });
 
-  //   renderer.toneMappingExposure = Math.pow(value, 4.0);
+  gui.add(params, 'bloomRadius', 0.0, 1.0).step(0.01).onChange(function (value) {
 
-  // });
+    bloomPass.radius = Number(value);
 
-  // gui.add(params, 'bloomThreshold', 0.0, 1.0).onChange(function (value) {
-
-  //   bloomPass.threshold = Number(value);
-
-  // });
-
-  // gui.add(params, 'bloomStrength', 0.0, 3.0).onChange(function (value) {
-
-  //   bloomPass.strength = Number(value);
-
-  // });
-
-  // gui.add(params, 'bloomRadius', 0.0, 1.0).step(0.01).onChange(function (value) {
-
-  //   bloomPass.radius = Number(value);
-
-  // });
+  });
   // gui.open();
+
+  let particleSystem = particleGrid(2, 10000, 200);
+  scene.add(particleSystem);
+ 
 
   window.onresize = function () {
     var width = window.innerWidth;
@@ -297,7 +251,7 @@ const scene = (function (ui, lights, materials) {
   function animate() {
     requestAnimationFrame(animate);
     var delta = clock.getDelta();
-  
+    if (mixer) mixer.update(delta);
     render();
   }
 
@@ -311,7 +265,7 @@ const scene = (function (ui, lights, materials) {
     render();
   }
   function render() {
-  
+
     controls.update();
     composer.render();
   }
@@ -321,8 +275,9 @@ const scene = (function (ui, lights, materials) {
       animate();
 
       window.onload = function () {
-        toggleLightsBtn.addEventListener('change', switchToNight, false);
         window.addEventListener('resize', onWindowResize, false);
+        playaudioBtn.addEventListener('click', playAudioSong);
+        stopaudioBtn.addEventListener('click', stopAudioSong);
       }
     }
 

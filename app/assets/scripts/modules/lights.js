@@ -5,10 +5,10 @@ export const lights = (function () {
     getDirectionalLight: function (intensity) {
       var light = new THREE.DirectionalLight(0xffffe6, intensity);
       light.castShadow = true;
-      // light.shadow.camera.left = -200;
-      // light.shadow.camera.bottom = -200;
-      // light.shadow.camera.right = 200;
-      // light.shadow.camera.top = 200;
+      light.shadow.camera.left = -200;
+      light.shadow.camera.bottom = -200;
+      light.shadow.camera.right = 200;
+      light.shadow.camera.top = 200;
       light.shadow.mapSize.width = 2048;
       light.shadow.mapSize.height = 2048;
       return light;
@@ -37,7 +37,7 @@ export const lights = (function () {
     },
     getPointLight: function (intensity) {
       var light = new THREE.PointLight(0xffffe6, intensity);
-      light.distance = 2;
+      // light.distance = 2;
       light.decay = 2;
       light.castShadow = true;
       light.shadow.mapSize.width = 2048;  // default

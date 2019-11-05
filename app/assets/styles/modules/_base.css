@@ -10,7 +10,7 @@ body {
     height:100%;
     overflow-x: hidden; 
     /* font-family: 'Noto Sans', sans-serif; */
-    font-family: 'Hepta Slab', serif;
+    font-family: 'VT323', monospace;
     position: relative; 
     margin:0;
     padding:0;
@@ -24,6 +24,7 @@ body {
     overflow: hidden;
  
 }
+
 
 
 

@@ -1,10 +1,10 @@
 {
-  "name": "int",
+  "name": "dancinglogo",
   "version": "1.0.0",
   "description": "does it matter?",
   "main": "app.js",
   "scripts": {
-    "test": "roar"
+    "test": "roar" 
   },
   "author": "zefear",
   "license": "MIT",
@@ -31,7 +31,7 @@
     "webpack-cli": "^3.3.6"
   },
   "dependencies": {
-    "normalize.css": "^8.0.1", 
+    "normalize.css": "^8.0.1",
     "three": "^0.108.0"
   }
 }
