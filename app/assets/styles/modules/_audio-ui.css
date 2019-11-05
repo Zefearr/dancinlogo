@@ -37,9 +37,18 @@ label[for="wire"] {
     /* font-weight: 600; */
     font-size:24px;
 }
+label[for="volume"] {
+    color:#B7BABD;
+    /* font-weight: 600; */
+    font-size:24px;
+    margin-left:20px;
+}
 #materialType {
     margin-left:10px;
     width:20px;
     height:20px;
     cursor: pointer;
+}
+#audioVolume {
+    margin-left:10px;
 }

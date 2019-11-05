@@ -40,6 +40,7 @@ const scene = (function (ui, lights, materials) {
   audioClip.volume = 0.5;
   var playaudioBtn = document.getElementById('audioPlay');
   var stopaudioBtn = document.getElementById('audioStop');
+  var volumeControl = document.getElementById('audioVolume');
   var scene, camera, clock, renderer, action, controls, composer, params, bloomPass, renderScene, mixer, toggleLightsBtn;
   var WIDTH = window.innerWidth;
   var HEIGHT = window.innerHeight;
@@ -158,6 +159,8 @@ const scene = (function (ui, lights, materials) {
 
     
   });
+
+ 
   function updateCube() {
     var value = params.material;
     var newMaterial;
@@ -237,7 +240,9 @@ const scene = (function (ui, lights, materials) {
   let particleSystem = particleGrid(2, 10000, 200);
   scene.add(particleSystem);
  
-
+  function changeVolume() {
+    audioClip.volume = this.value;  
+  }
   window.onresize = function () {
     var width = window.innerWidth;
     var height = window.innerHeight;
@@ -278,6 +283,7 @@ const scene = (function (ui, lights, materials) {
         window.addEventListener('resize', onWindowResize, false);
         playaudioBtn.addEventListener('click', playAudioSong);
         stopaudioBtn.addEventListener('click', stopAudioSong);
+        volumeControl.addEventListener('input', changeVolume);
       }
     }
 
