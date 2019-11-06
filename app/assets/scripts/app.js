@@ -106,14 +106,14 @@ const scene = (function (ui, lights, materials) {
   loader.load('./assets/models/onoff4.fbx', function (object) {
     var mat = new THREE.MeshStandardMaterial({ color: 0xffffff });
     // mat.wireframe = true;
-    mat.emissive = new THREE.Color('gray');
+    mat.emissive = new THREE.Color('gray');  
     mat.emissiveMap = textureLoader.load('./assets/images/textures/lambert2_emissive.jpg');
     mat.map = textureLoader.load('./assets/images/textures/lambert2_albedo.jpg');
-    // mat.roughness = 1;
+    mat.roughness = 1;
     // mat.normalMap = textureLoader.load('./assets/images/textures/lambert2_normal.png');
     // mat.normalScale = new THREE.Vector2(1, 1);
-    // mat.roughnessMap = textureLoader.load('./assets/images/textures/lambert2_roughness.jpg');
-    // mat.metalnessMap =  textureLoader.load('./assets/images/textures/lambert2_metallic.jpg');
+    mat.roughnessMap = textureLoader.load('./assets/images/textures/lambert2_roughness.jpg');
+    mat.metalnessMap =  textureLoader.load('./assets/images/textures/lambert2_metallic.jpg');
 
     let wireFrameToggler = document.getElementById('materialType');
     wireFrameToggler.addEventListener('change', function(){
